@@ -31,7 +31,7 @@ jobs:
     - name: Download content
       run: |
         URL="https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt"
-        OUTPUT_FILE="./rule/adservers.txt"
+        OUTPUT_FILE="./rule-set/adservers.txt"
 
         curl -L $URL -o $OUTPUT_FILE
 
@@ -43,23 +43,11 @@ jobs:
         fi
     - name: Convert AdGuard DNS Filter to sing-box rule set
       run: |
-        sing-box rule-set convert --type adguard --output ./rule/adservers.srs ./rule/adservers.txt
+        sing-box rule-set convert --type adguard --output ./rule-set/adservers.srs ./rule-set/adservers.txt
     - name: Run script
       run: python ../main.py
-      working-directory: ./rule/
-    - name: Commit and push config.json
-      run: |
-        git config --global user.email "action@github.com"
-        git config --global user.name "GitHub Action"
-        git add ./rule/*.json
-        git add ./rule/*.srs
-        git add ./rule/*.txt
-
-        # 检查是否有文件被修改
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-          exit 0
-        else
-          git commit -m "Update rules"
-          git push
-        fi
+      working-directory: ./rule-set/
+    - name: Release rule sets
+      run: .github/release-rule-set.sh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
